@@ -1,7 +1,7 @@
 from fastapi import FastAPI,HTTPException,Depends
 from datetime import timedelta
-from models import SessionLocal,User,Product
-from pydatic_models import UserCreate, UserLogin, ProductCreate, UserOut, ProductBase, ProductUpdate, ProductUpdateOut
+from db import SessionLocal,User,Product
+from pydatic_model import UserCreate, UserLogin, ProductCreate, UserOut, ProductBase, ProductUpdate, ProductUpdateOut
 from fastapi.middleware.cors import CORSMiddleware
 from auth import pwd_context,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,get_current_user
 
@@ -60,7 +60,7 @@ def get_products(current_user: User = Depends(get_current_user)):
 
 @app.post("/products")
 def create_product(product: ProductCreate, current_user: User = Depends(get_current_user)):
-    db_product = Product(**product.model_dump(), user_id=current_user.id)
+    db_product = Product(name=product.name,price=product,quantity=product.quantity,user id=current_user.id)
     db.add(db_product)
     db.commit()
     db.refresh(db_product)

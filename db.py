@@ -1,15 +1,12 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Float, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
-import datetime
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+from datetime import datetime, timezone
 
-
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Kevin254!@localhost/myduka_api"
+SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:leo.steve@localhost:5432/sale_system_api'
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
-
+Base = declarative_base()  
 
 class User(Base):
     __tablename__ = "users"
@@ -20,7 +17,6 @@ class User(Base):
     password = Column(String, nullable=False)
     products = relationship("Product", back_populates="user")
 
-
 class Product(Base):
     __tablename__ = "products"
 
@@ -29,11 +25,24 @@ class Product(Base):
     cost = Column(Float, nullable=False)
     price = Column(Float, nullable=False)
     created_at = Column(
-        DateTime, default=datetime.datetime.now(datetime.UTC), nullable=False)
-    stock_quantity=Column(Integer,default=0)
+        DateTime, default=datetime.now(timezone.utc), nullable=False)  
+    stock_quantity = Column(Integer, default=0)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     user = relationship("User", back_populates="products")
+
+
+class Sale(Base):
+    __tablename__ = "sale"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    Pid = Column(Integer,ForeignKey("products.id"), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    created_at = Column(
+        DateTime, default=datetime.now(timezone.utc), nullable=False) 
+    Product = relationship("Product",back_populates="sales" )
+
+
 
 
 Base.metadata.create_all(bind=engine)
