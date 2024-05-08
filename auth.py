@@ -6,7 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from db import User,SessionLocal
 
-SECRET_KEY = "&&&&&&&&&"
+SECRET_KEY = "jjjjjjjjjj"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
