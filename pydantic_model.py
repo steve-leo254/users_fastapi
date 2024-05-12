@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from datetime import datetime
 
 class UserOut(BaseModel):
     username: str
@@ -14,6 +14,36 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+
+class CustomerBase(BaseModel):
+    name: str
+    phone_no: str
+    email: str
+
+class CustomerCreate(CustomerBase):
+    pass
+
+class CustomerUpdate(CustomerBase):
+    name: str 
+    phone_no: str = None
+    email: str = None
+
+class Customer(CustomerBase):
+    id: int
+
+
+class SaleBase(BaseModel):
+    total_amount: float
+    created_at: datetime
+
+class SaleCreate(SaleBase):
+    pass
+
+class SaleUpdate(SaleBase):
+    total_amount: float 
+
+class Sale(SaleBase):
+    id: int
 
 
 class ProductBase(BaseModel):

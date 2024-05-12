@@ -16,6 +16,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     products = relationship("Product", back_populates="user")
+    sales = relationship("Sale", back_populates="user")
 
 class Product(Base):
     __tablename__ = "products"
@@ -30,14 +31,19 @@ class Product(Base):
 
     user = relationship("User", back_populates="products")
 
+
+
 class Sale(Base):
     __tablename__ = 'sale'
     id = Column(Integer, primary_key=True)
     total_amount = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'))  
+    user = relationship("User", back_populates="sales")  
+
 
 class Customers(Base):
-    __tablename__ = "customers"  # Fixed typo here
+    __tablename__ = "customers"  
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     phone_no = Column(String, nullable=False)
