@@ -1,74 +1,65 @@
 from pydantic import BaseModel
 from datetime import datetime
+from enum import Enum
+from typing import Optional
 
-class UserOut(BaseModel):
-    username: str
-    email: str
-
-class UserCreate(UserOut):
-    password: str
-
-
+class Tags(Enum):
+    PRODUCTS= "product"
+    UserCreate = "Customers"
+    PRODUCT_IMAGE = "product_image"
+    LOGIN = "UserLogin"
+    PURCHASE = "purchase"
 
 class UserLogin(BaseModel):
     username: str
     password: str
 
+class TokenData(BaseModel):
+    username:  Optional[str] =  None
 
-class CustomerBase(BaseModel):
-    name: str
-    phone_no: str
-    email: str
 
-class CustomerCreate(CustomerBase):
-    pass
+class ProductRequest(BaseModel):
+    product_name: str
+    price: float
+    stock_quantity: int
+    cost : float
 
-class CustomerUpdate(CustomerBase):
-    name: str 
-    phone_no: str = None
-    email: str = None
 
-class Customer(CustomerBase):
+
+class ProductResponse(BaseModel):
     id: int
+    product_name: str
+    price: float
+    stock_quantity: int
+    image_url : str
 
-
-class SaleBase(BaseModel):
+   
+class SaleRequest(BaseModel):
     total_amount: float
-    created_at: datetime
+    created_at: Optional[datetime]
+    customer_id: int
 
-class SaleCreate(SaleBase):
-    pass
-
-class SaleUpdate(SaleBase):
-    total_amount: float 
-
-class Sale(SaleBase):
+class SaleResponse(SaleRequest):
     id: int
+    
 
+class UserCreate(BaseModel):
+    user_name: str
+    user_password: str
+    user_email: str
+    phone_no: str
 
-class ProductBase(BaseModel):
-    name: str
-    cost: float
-    price:float
-    stock_quantity:int
-
-
-class ProductUpdate(BaseModel):
-    name: str | None = None
-    cost: float | None = None
-    price: float | None = None
-    stock_quantity: int | None = None
-
-class ProductUpdateOut(ProductUpdate):
+class UserResponse(BaseModel):
     id: int
+    user_name: str
+    user_email: str
+    user_contact: str
 
 
-class ProductCreate(ProductBase):
-    pass
 
+class ImageResponse(BaseModel):
+    filename: str
+    content_type: str
 
-class Product(ProductBase):
-    id: int
-
-    class Config:
-        orm_mode = True
+    # class Config:
+    #     orm_mode = True
