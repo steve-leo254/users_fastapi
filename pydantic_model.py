@@ -7,8 +7,10 @@ class Tags(Enum):
     PRODUCTS= "product"
     UserCreate = "Customers"
     PRODUCT_IMAGE = "product_image"
-    LOGIN = "UserLogin"
+    LOGIN = "login"
     PURCHASE = "purchase"
+    # loginUser = "loginRequest"
+
 
 class UserLogin(BaseModel):
     username: str
@@ -18,8 +20,19 @@ class TokenData(BaseModel):
     username:  Optional[str] =  None
 
 
+
+class login(BaseModel):
+    user_name : str
+    user_password : str
+
+
+class loginRequest(BaseModel):
+    user_name : str
+    user_password : str
+
+
 class ProductRequest(BaseModel):
-    product_name: str
+    name: str
     price: float
     stock_quantity: int
     cost : float
@@ -28,10 +41,11 @@ class ProductRequest(BaseModel):
 
 class ProductResponse(BaseModel):
     id: int
-    product_name: str
+    name: str
     price: float
     stock_quantity: int
     image_url : str
+    cost :float
 
    
 class SaleRequest(BaseModel):

@@ -27,9 +27,10 @@ class Product(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
     price = Column(Float, nullable=False)
+    cost = Column (Float, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     stock_quantity = Column(Integer, default=0)
-    user_id = Column(Integer, ForeignKey('customers.id'))  # Corrected ForeignKey reference
+    user_id = Column(Integer, ForeignKey('customers.id'))  
 
 class Sale(Base):
     __tablename__ = 'sales'
@@ -37,23 +38,15 @@ class Sale(Base):
     total_amount = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     customer_id = Column(Integer, ForeignKey('customers.id'), nullable=False)
-    customer = relationship('Customer', backref='sales')  # Changed 'sale' to 'sales' for consistency
+    customer = relationship('Customer', backref='sales') 
 
 class Customer(Base):
     __tablename__ = "customers"  
     id = Column(Integer, primary_key=True)
     user_name = Column(String, nullable=False)
-    user_password = Column(String(255), nullable=False)  # Renamed for clarity
-    hashed_password = Column(String(255))  # Store hashed passwords
+    user_password = Column(String(255), nullable=False)  
     phone_no = Column(String, nullable=False)
-    email = Column(String, nullable=False)  # Renamed for clarity
+    user_email = Column(String, nullable=False) 
 
-    def set_password(self, password):
-        """Create hashed password."""
-        self.hashed_password = generate_password_hash(password)
-
-    def check_password(self, password):
-        """Check hashed password."""
-        return check_password_hash(self.hashed_password, password)
 
 Base.metadata.create_all(bind=engine)
