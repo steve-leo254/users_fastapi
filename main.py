@@ -17,6 +17,18 @@ from auth import create_access_token, get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import StreamingResponse
 
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="https://21e53aed93dc62afa399a765aa00ba7f@o4507324307668992.ingest.us.sentry.io/4507324318089216",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
 
 app = FastAPI()
 
@@ -37,6 +49,13 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+
+@app.get("/sentry-debug")
+async def trigger_error():
+    division_by_zero = 1 / 0
+
 
 
 # Define STATIC_DIRECTORY
@@ -112,7 +131,7 @@ async def get_images(request: Request):
         base_url = str(request.base_url)
         print('second', base_url)
         image_urls = [
-            f"{base_url.rstrip('/')}/images/{file}" for file in image_files]
+            f"{base_url.rstrip('/')}/static/uploads/{file}" for file in image_files]
         print('third.....l', image_urls)
         return image_urls
 
@@ -155,8 +174,8 @@ def fetch_products(request: Request, db: Session = Depends(get_db)):
         for product in products:
             image_filename = f"product_{product.id}.jpg"
             base_url = str(request.base_url)
-            image_url = f"{base_url.rstrip('/')}/images/{image_filename}"
-            print("kwanzaaaaa ...............", image_url)
+            image_url =   f"{base_url.rstrip('/')}/images/{image_filename}"
+            print("kwanzaa............", image_url)
             products_with_images.append(ProductResponse(
                 id=product.id,
                 name=product.name,
