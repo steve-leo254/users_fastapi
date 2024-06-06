@@ -20,7 +20,7 @@ from fastapi.responses import StreamingResponse
 import sentry_sdk
 
 sentry_sdk.init(
-    dsn="https://21e53aed93dc62afa399a765aa00ba7f@o4507324307668992.ingest.us.sentry.io/4507324318089216",
+    dsn="https://9f21ea0acc3e9b24f0f3528d921b6e4d@o4507324307668992.ingest.us.sentry.io/4507384183193600",
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     traces_sample_rate=1.0,
@@ -29,6 +29,7 @@ sentry_sdk.init(
     # We recommend adjusting this value in production.
     profiles_sample_rate=1.0,
 )
+
 
 app = FastAPI()
 
@@ -51,11 +52,9 @@ def get_db():
         db.close()
 
 
-
 @app.get("/sentry-debug")
 async def trigger_error():
     division_by_zero = 1 / 0
-
 
 
 # Define STATIC_DIRECTORY
@@ -71,6 +70,7 @@ app.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
 
 # Define UPLOAD_DIRECTORY
 UPLOAD_DIRECTORY = os.getenv("UPLOAD_DIRECTORY", "default/path/to/uploads")
+print (".......kwanzaaa",UPLOAD_DIRECTORY)
 
 # Ensure the uploads directory exists
 if not os.path.exists(UPLOAD_DIRECTORY):
@@ -113,14 +113,6 @@ def login_user(loginRequest: loginRequest, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.post("/upload/", tags=[Tags.PRODUCT_IMAGE.value])
-async def upload_image(file: UploadFile = File(...)):
-    with open(os.path.join(UPLOAD_DIRECTORY, file.filename), "wb") as buffer:
-        buffer.write(await file.read())
-
-    return {"filename": file.filename}
-
-
 @app.get("/images", tags=[Tags.PRODUCT_IMAGE.value])
 async def get_images(request: Request):
 
@@ -153,16 +145,62 @@ async def get_image(filename: str):
     return StreamingResponse(open(image_path, "rb"), media_type="image/jpeg")
 
 
-# Products...(post ,get and put)
+    # Products...(post ,get and put)
 
-@app.post('/products', tags=[Tags.PRODUCTS.value])
-def add_product(product: ProductRequest, db: Session = Depends(get_db)):
-    db_product = Product(name=product.name, price=product.price,
-                         stock_quantity=product.stock_quantity, cost=product.cost)
+
+
+
+@app.post("/upload/", tags=["PRODUCT_IMAGE"])
+async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    db_product = Product()
     db.add(db_product)
     db.commit()
-    db.refresh(db_product)
-    return db_product
+    product_id = db_product.id
+    file_extension = os.path.splitext(file.filename)[1] 
+    new_filename = f"{product_id}{file_extension}"  
+    
+    file_path = os.path.join(UPLOAD_DIRECTORY, new_filename)
+    with open(file_path, "wb") as buffer:
+        buffer.write(await file.read())
+
+
+
+@app.post('/products', tags=[Tags.PRODUCTS.value, Tags.PRODUCT_IMAGE.value])
+async def add_product(product: ProductRequest=Depends(), file: UploadFile = File(...), db: Session = Depends(get_db)):
+    try:
+        # Save the product to get the product ID
+        db_product = Product(
+            name=product.name,
+            price=product.price,
+            stock_quantity=product.stock_quantity,
+            cost=product.cost
+        )
+        db.add(db_product)
+        db.commit()
+        db.refresh(db_product)
+        product_id = db_product.id
+
+        # Create a new filename for the uploaded file
+        file_extension = os.path.splitext(file.filename)[1]
+        new_filename = f"{product_id}{file_extension}"
+        
+        # Save the file to the upload directory
+        file_path = os.path.join(UPLOAD_DIRECTORY, new_filename)
+        with open(file_path, "wb") as buffer:
+            buffer.write(await file.read())
+
+        # Update the image URL in the product record
+        img_url = f"default/path/to/uploads/{new_filename}"
+        db_product.image_url = img_url
+        db.commit()
+        db.refresh(db_product)
+
+        # Return the product response
+        product_response = ProductResponse.from_orm(db_product)
+        raise HTTPException(status_code=201, detail=f"successfully added product id{product_id} " )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="An error occurred while adding the product.") 
 
 
 @app.get('/products', response_model=list[ProductResponse], tags=[Tags.PRODUCTS.value])
@@ -174,16 +212,16 @@ def fetch_products(request: Request, db: Session = Depends(get_db)):
         for product in products:
             image_filename = f"product_{product.id}.jpg"
             base_url = str(request.base_url)
-            image_url =   f"{base_url.rstrip('/')}/images/{image_filename}"
+            image_url = f"{base_url.rstrip('/')}/images/{image_filename}"
             print("kwanzaa............", image_url)
             products_with_images.append(ProductResponse(
                 id=product.id,
                 name=product.name,
                 stock_quantity=product.stock_quantity,
                 price=product.price,
-                image_url=image_url,
-                cost=product.cost
-                # user_id = product.user_id
+                image_url=product.image_url,
+                cost=product.cost,
+                user_id=product.user_id
             ))
         return products_with_images
     except Exception as e:

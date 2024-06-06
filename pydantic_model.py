@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
+
 from datetime import datetime
 from enum import Enum
 from typing import Optional
@@ -31,21 +32,40 @@ class loginRequest(BaseModel):
     user_password : str
 
 
+# class ProductRequest(BaseModel):
+#     name: str
+#     price: float
+#     stock_quantity: int
+#     cost : float
+#     # image_url : str
+
 class ProductRequest(BaseModel):
-    name: str
-    price: float
-    stock_quantity: int
-    cost : float
+    name: str = Field(..., example="Sample Product")
+    price: float = Field(..., example=19.99)
+    stock_quantity: int = Field(..., example=100)
+    cost: float = Field(..., example=10.00)
 
-
+    # class Config:
+    #     schema_extra = {
+    #         "example": {
+    #             "name": "Sample Product",
+    #             "price": 19.99,
+    #             "stock_quantity": 100,
+    #             "cost": 10.00
+    #         }
+    #     }
 
 class ProductResponse(BaseModel):
     id: int
     name: str
     price: float
     stock_quantity: int
-    image_url : str
+    image_url : Optional[str] = None
     cost :float
+
+
+    class Config:
+        orm_mode = True
 
    
 class SaleRequest(BaseModel):
@@ -75,5 +95,4 @@ class ImageResponse(BaseModel):
     filename: str
     content_type: str
 
-    # class Config:
-    #     orm_mode = True
+    

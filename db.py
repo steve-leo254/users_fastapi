@@ -23,13 +23,13 @@ Base = declarative_base()
 
 class Product(Base):
     __tablename__ = "products"
-
-    id = Column(Integer, primary_key=True, nullable=False)
-    name = Column(String, nullable=False)
-    price = Column(Float, nullable=False)
-    cost = Column (Float, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    price = Column(Float)
+    cost = Column (Float)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
     stock_quantity = Column(Integer, default=0)
+    image_url = Column(String)
     user_id = Column(Integer, ForeignKey('customers.id'))  
 
 class Sale(Base):
