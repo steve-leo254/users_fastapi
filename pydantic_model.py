@@ -32,36 +32,24 @@ class loginRequest(BaseModel):
     user_password : str
 
 
-# class ProductRequest(BaseModel):
-#     name: str
-#     price: float
-#     stock_quantity: int
-#     cost : float
-#     # image_url : str
-
 class ProductRequest(BaseModel):
     name: str = Field(..., example="Sample Product")
     price: float = Field(..., example=19.99)
     stock_quantity: int = Field(..., example=100)
     cost: float = Field(..., example=10.00)
+    user_id :int
 
-    # class Config:
-    #     schema_extra = {
-    #         "example": {
-    #             "name": "Sample Product",
-    #             "price": 19.99,
-    #             "stock_quantity": 100,
-    #             "cost": 10.00
-    #         }
-    #     }
+
 
 class ProductResponse(BaseModel):
     id: int
     name: str
     price: float
     stock_quantity: int
-    image_url : Optional[str] = None
     cost :float
+    image_url : str 
+    user_id :int
+    
 
 
     class Config:

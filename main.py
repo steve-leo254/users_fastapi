@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 import base64
-import tempfile
+import shutil
 from pathlib import Path
 from typing import Annotated
 from passlib.context import CryptContext
@@ -70,7 +70,7 @@ app.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
 
 # Define UPLOAD_DIRECTORY
 UPLOAD_DIRECTORY = os.getenv("UPLOAD_DIRECTORY", "default/path/to/uploads")
-print (".......kwanzaaa",UPLOAD_DIRECTORY)
+print(".......kwanzaaa", UPLOAD_DIRECTORY)
 
 # Ensure the uploads directory exists
 if not os.path.exists(UPLOAD_DIRECTORY):
@@ -144,10 +144,7 @@ async def get_image(filename: str):
     # Return the image file
     return StreamingResponse(open(image_path, "rb"), media_type="image/jpeg")
 
-
     # Products...(post ,get and put)
-
-
 
 
 @app.post("/upload/", tags=["PRODUCT_IMAGE"])
@@ -156,24 +153,23 @@ async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_d
     db.add(db_product)
     db.commit()
     product_id = db_product.id
-    file_extension = os.path.splitext(file.filename)[1] 
-    new_filename = f"{product_id}{file_extension}"  
-    
+    file_extension = os.path.splitext(file.filename)[1]
+    new_filename = f"{product_id}{file_extension}"
+
     file_path = os.path.join(UPLOAD_DIRECTORY, new_filename)
     with open(file_path, "wb") as buffer:
         buffer.write(await file.read())
 
-
-
-@app.post('/products', tags=[Tags.PRODUCTS.value, Tags.PRODUCT_IMAGE.value])
-async def add_product(product: ProductRequest=Depends(), file: UploadFile = File(...), db: Session = Depends(get_db)):
+@app.post('/products', response_model=ProductResponse, tags=[Tags.PRODUCTS.value, Tags.PRODUCT_IMAGE.value])
+async def add_product(product: ProductRequest = Depends(), file: UploadFile = File(...), db: Session = Depends(get_db)):
     try:
         # Save the product to get the product ID
         db_product = Product(
             name=product.name,
             price=product.price,
             stock_quantity=product.stock_quantity,
-            cost=product.cost
+            cost=product.cost,
+            user_id=product.user_id
         )
         db.add(db_product)
         db.commit()
@@ -183,24 +179,25 @@ async def add_product(product: ProductRequest=Depends(), file: UploadFile = File
         # Create a new filename for the uploaded file
         file_extension = os.path.splitext(file.filename)[1]
         new_filename = f"{product_id}{file_extension}"
-        
+
         # Save the file to the upload directory
         file_path = os.path.join(UPLOAD_DIRECTORY, new_filename)
         with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
+            shutil.copyfileobj(file.file, buffer)
 
         # Update the image URL in the product record
-        img_url = f"default/path/to/uploads/{new_filename}"
+        img_url = f"/uploads/{new_filename}"
         db_product.image_url = img_url
         db.commit()
         db.refresh(db_product)
 
         # Return the product response
-        product_response = ProductResponse.from_orm(db_product)
-        raise HTTPException(status_code=201, detail=f"successfully added product id{product_id} " )
+        return ProductResponse.from_orm(db_product)
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="An error occurred while adding the product.") 
+        raise HTTPException(
+            status_code=500, detail="An error occurred while adding the product."
+        )
 
 
 @app.get('/products', response_model=list[ProductResponse], tags=[Tags.PRODUCTS.value])
