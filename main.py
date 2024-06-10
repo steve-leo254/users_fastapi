@@ -30,7 +30,6 @@ sentry_sdk.init(
     profiles_sample_rate=1.0,
 )
 
-
 app = FastAPI()
 
 origins = ["http://localhost:5173"]
@@ -325,3 +324,11 @@ def dashboard(db: Session = Depends(get_db)):
                          for name, sales_product in sales_per_product]
 
     return {'sales_data': sales_data, 'salesproduct_data': salesproduct_data}
+
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    
