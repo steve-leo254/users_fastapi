@@ -1,4 +1,4 @@
-from jose import JWTError, jwt
+import  jwt
 from datetime import datetime, timedelta, timezone
 from typing import Union,Annotated,Optional
 from fastapi import Depends,HTTPException,status
@@ -32,7 +32,7 @@ def verify_token(token: str ,credentials_exception):
         if username is None:
             raise credentials_exception
         token_data = TokenData(user_name=username)
-    except JWTError:
+    except jwt.DecodeError:
         raise credentials_exception
     
 
@@ -61,7 +61,7 @@ async def get_current_user(token: Annotated[str, Depends(get_token_auth_header)]
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
-    except JWTError:
+    except jwt:
         raise credentials_exception
     user = get_user(username)
     if user is None:
