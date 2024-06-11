@@ -50,10 +50,10 @@ class Sale(Base):
 class Customer(Base):
     __tablename__ = "customers"
     id = Column(Integer, primary_key=True)
-    user_name = Column(String, nullable=False)
+    user_name = Column(String, nullable=False,unique=True)
     user_password = Column(String(255), nullable=False)
     phone_no = Column(String, nullable=False)
-    user_email = Column(String, nullable=False)
+    user_email = Column(String, nullable=False,unique=True)
 
     # Relationships
     products = relationship('Product', back_populates='customer')
