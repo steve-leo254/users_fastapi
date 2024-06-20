@@ -45,7 +45,7 @@ class Sale(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     customer_id = Column(Integer, ForeignKey('customers.id'), nullable=False)
 
-    customer = relationship('Customer', back_populates='sales')
+
 
 class Customer(Base):
     __tablename__ = "customers"

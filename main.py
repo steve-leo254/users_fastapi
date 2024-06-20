@@ -1,49 +1,46 @@
+import os
+import shutil
+from typing import Annotated, List
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Request, status
-from sqlalchemy import Date, cast, func
-from starlette.responses import FileResponse
-from db import Base, engine, SessionLocal, Product, Customer, Sale
-from sqlalchemy.orm import Session
-from pydantic_model import ProductRequest, ProductResponse, UserResponse, UserCreate, Tags, \
-    UserCreate, ImageResponse, SaleRequest, SaleResponse, loginRequest
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
-import base64
-import shutil
-from pathlib import Path
-from typing import Annotated
-from passlib.context import CryptContext
-from auth import create_access_token, get_current_user
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import StreamingResponse
+from sqlalchemy import Date, cast, func
+from sqlalchemy.orm import Session
+from auth import create_access_token, get_current_user, verify_password, pwd_context
+from db import SessionLocal, Product, Customer, Sale
+from pydantic_model import ProductRequest, ProductResponse, UserCreate, SaleRequest, SaleResponse, loginRequest, Tags
 
 import sentry_sdk
 
 sentry_sdk.init(
     dsn="https://9f21ea0acc3e9b24f0f3528d921b6e4d@o4507324307668992.ingest.us.sentry.io/4507384183193600",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
     traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
     profiles_sample_rate=1.0,
 )
 
 app = FastAPI()
-
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://64.225.71.67",
         "http://161.35.148.255:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Configure directories
+STATIC_DIRECTORY = "default/path/to/static/files"
+UPLOAD_DIRECTORY = "default/path/to/uploads"
+
+os.makedirs(STATIC_DIRECTORY, exist_ok=True)
+os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
 
 def get_db():
     db = SessionLocal()
@@ -52,42 +49,20 @@ def get_db():
     finally:
         db.close()
 
-
 @app.get("/sentry-debug")
 async def trigger_error():
     division_by_zero = 1 / 0
 
 
-# Define STATIC_DIRECTORY
-STATIC_DIRECTORY = os.getenv(
-    "STATIC_DIRECTORY", "default/path/to/static/files")
-
-# Ensure the static files directory exists
-if not os.path.exists(STATIC_DIRECTORY):
-    os.makedirs(STATIC_DIRECTORY)
-
-# Mount the static files directory
-app.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
-
-# Define UPLOAD_DIRECTORY
-UPLOAD_DIRECTORY = os.getenv("UPLOAD_DIRECTORY", "default/path/to/uploads")
-print(".......kwanzaaa", UPLOAD_DIRECTORY)
-
-# Ensure the uploads directory exists
-if not os.path.exists(UPLOAD_DIRECTORY):
-    os.makedirs(UPLOAD_DIRECTORY)
 
 
 @app.post("/register", tags=[Tags.UserCreate.value])
-async def create_user(add_user: UserCreate,  db: Session = Depends(get_db)):
-
-    hashedpasword = pwd_context.hash(add_user.user_password)
-
-    db = SessionLocal()
+async def create_user(add_user: UserCreate, db: Session = Depends(get_db)):
+    hashed_password = pwd_context.hash(add_user.user_password)
     new_customer = Customer(
         user_name=add_user.user_name,
         user_email=add_user.user_email,
-        user_password=hashedpasword,
+        user_password=hashed_password,
         phone_no=add_user.phone_no
     )
     db.add(new_customer)
@@ -96,103 +71,53 @@ async def create_user(add_user: UserCreate,  db: Session = Depends(get_db)):
     return new_customer
 
 
-# login
+
+
 @app.post('/login', tags=[Tags.LOGIN.value])
-def login_user(loginRequest: loginRequest, db: Session = Depends(get_db)):
-
-    user = db.query(Customer).filter(
-        Customer.user_name == loginRequest.user_name).first()
-    print("loginn.......", loginRequest)
-    if not user:
+def login_user(login_request: loginRequest, db: Session = Depends(get_db)):
+    user = db.query(Customer).filter(Customer.user_name == login_request.user_name).first()
+    if not user or not verify_password(login_request.user_password, user.user_password):
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Invalid Credentials")
-    if not verify_password(loginRequest.user_password, user.user_password):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Invalid Credentials")
-
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Credentials"
+        )
     access_token = create_access_token(data={"sub": user.user_name})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/images", tags=[Tags.PRODUCT_IMAGE.value])
-async def get_images(request: Request):
 
-    try:
-        image_files = [file for file in os.listdir(
-            UPLOAD_DIRECTORY) if file.endswith(('.jpg', '.png', '.jpeg'))]
-        print("first........", image_files)
-        base_url = str(request.base_url)
-        print('second', base_url)
-        image_urls = [
-            f"{base_url.rstrip('/')}/static/uploads/{file}" for file in image_files]
-        print('third.....l', image_urls)
-        return image_urls
-
-    except Exception as e:
-
-        print(f"Error fetching images: {e}")
-
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
-@app.get("/images/{filename}", tags=[Tags.PRODUCT_IMAGE.value])
-async def get_image(filename: str):
-    # Check if the image exists
-    image_path = os.path.join(UPLOAD_DIRECTORY, filename)
-    if not os.path.exists(image_path):
-        raise HTTPException(status_code=404, detail="Image not found")
-
-    # Return the image file
-    return StreamingResponse(open(image_path, "rb"), media_type="image/jpeg")
-
-    # Products...(post ,get and put)
-
-
-@app.post("/upload/", tags=["PRODUCT_IMAGE"])
-async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    db_product = Product()
-    db.add(db_product)
-    db.commit()
-    product_id = db_product.id
-    file_extension = os.path.splitext(file.filename)[1]
-    new_filename = f"{product_id}{file_extension}"
-
-    file_path = os.path.join(UPLOAD_DIRECTORY, new_filename)
-    with open(file_path, "wb") as buffer:
-        buffer.write(await file.read())
 
 @app.post('/products', response_model=ProductResponse, tags=[Tags.PRODUCTS.value, Tags.PRODUCT_IMAGE.value])
-async def add_product(product: ProductRequest = Depends(), file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def add_product(
+    user: Annotated[dict, Depends(get_current_user)],
+    product: ProductRequest = Depends(),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
     try:
-        # Save the product to get the product ID
         db_product = Product(
             name=product.name,
             price=product.price,
             stock_quantity=product.stock_quantity,
             cost=product.cost,
-            user_id=product.user_id
+            user_id=user.get("id")
         )
         db.add(db_product)
         db.commit()
         db.refresh(db_product)
         product_id = db_product.id
 
-        # Create a new filename for the uploaded file
         file_extension = os.path.splitext(file.filename)[1]
         new_filename = f"{product_id}{file_extension}"
 
-        # Save the file to the upload directory
         file_path = os.path.join(UPLOAD_DIRECTORY, new_filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Update the image URL in the product record
         img_url = f"/uploads/{new_filename}"
         db_product.image_url = img_url
         db.commit()
         db.refresh(db_product)
 
-        # Return the product response
         return ProductResponse.from_orm(db_product)
     except Exception as e:
         db.rollback()
@@ -201,39 +126,39 @@ async def add_product(product: ProductRequest = Depends(), file: UploadFile = Fi
         )
 
 
-@app.get('/products', response_model=list[ProductResponse], tags=[Tags.PRODUCTS.value])
+
+
+@app.get('/products', response_model=List[ProductResponse], tags=[Tags.PRODUCTS.value])
 def fetch_products(request: Request, db: Session = Depends(get_db)):
     try:
         products = db.query(Product).all()
-        print("products.......", products)
-        products_with_images = []
-        for product in products:
-            image_filename = f"product_{product.id}.jpg"
-            base_url = str(request.base_url)
-            image_url = f"{base_url.rstrip('/')}/images/{image_filename}"
-            print("kwanzaa............", image_url)
-            products_with_images.append(ProductResponse(
+        base_url = str(request.base_url)
+        products_with_images = [
+            ProductResponse(
                 id=product.id,
                 name=product.name,
                 stock_quantity=product.stock_quantity,
                 price=product.price,
-                image_url=product.image_url,
+                image_url=f"{base_url.rstrip('/')}/images/{product.id}.jpg",
                 cost=product.cost,
                 user_id=product.user_id
-            ))
+            ) for product in products
+        ]
         return products_with_images
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# fetch by product id
+
 @app.get('/products/{id}', response_model=ProductResponse, tags=[Tags.PRODUCTS.value])
-def fetch_single_products(id: int, db: Session = Depends(get_db)):
+def fetch_single_product(id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == id).first()
     if product is None:
         raise HTTPException(status_code=404, detail="Product does not exist")
     return product
+
+
 
 
 @app.put('/purchase/{product_id}', tags=[Tags.PURCHASE.value])
@@ -243,94 +168,59 @@ def purchase_product(product_id: int, quantity: int, db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="Product not found")
     if product.stock_quantity < quantity:
         raise HTTPException(
-            status_code=400, detail="Not enough stock available")
+            status_code=400, detail="Not enough stock available"
+        )
     product.stock_quantity -= quantity
     db.commit()
     return {"message": "Purchase successful"}
 
 
-# sales get and post
-@app.post('/sales')
+
+
+@app.post('/sales', tags=[Tags.PURCHASE.value])
 def add_sale(sale: SaleRequest, db: Session = Depends(get_db)):
     try:
-        new_sale = Sale(pid=sale.pid, quantity=sale.quantity,
-                        created_at=sale.created_at, customer_id=sale.customer_id)
+        new_sale = Sale(
+            pid=sale.pid,
+            total_amount=sale.total_amount,
+            created_at=sale.created_at,
+            id=sale.id
+        )
         db.add(new_sale)
         db.commit()
         db.refresh(new_sale)
         return new_sale
-
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@app.get('/sales', response_model=list[SaleResponse])
+@app.get('/sales', response_model=List[SaleResponse], tags=[Tags.PURCHASE.value])
 def fetch_sales(db: Session = Depends(get_db)):
     sales = db.query(Sale).all()
     return sales
 
-
-# password hashing using bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-# @app.post("/register" ,tags=[Tags.UserCreate.value])
-# async def create_customer(add_customer: UserCreate,  db: Session = Depends(get_db)):
-
-#     hashedpasword=pwd_context.hash(add_customer.user_password)
-
-#     db = SessionLocal()
-#     new_customer = Customer(
-#         user_name = add_customer.user_name,
-#         user_email = add_customer.email,
-#         user_password =hashedpasword,
-#         phone_no=add_customer.phone_no
-#         )
-#     db.add(new_customer)
-#     db.commit()
-#     db.refresh(new_customer)
-#     return new_customer
-
-
 @app.get('/dashboard')
 def dashboard(db: Session = Depends(get_db)):
-
     sales_per_day = db.query(
         cast(func.date_trunc('day', Sale.created_at), Date).label('date'),
-        # calculate the total number of sales per day
         func.sum(Sale.quantity * Product.price).label('total_sales')
     ).join(Product).group_by(
         cast(func.date_trunc('day', Sale.created_at), Date)
-
-
     ).all()
 
-    #  to JSON format
-    sales_data = [{'date': str(day), 'total_sales': sales}
-                  for day, sales in sales_per_day]
-    #  sales per product
+    sales_data = [{'date': str(day), 'total_sales': sales} for day, sales in sales_per_day]
+
     sales_per_product = db.query(
-        Product.product_name,
-        func.sum(Sale.quantity*Product.product_price).label('sales_product')
+        Product.name,
+        func.sum(Sale.quantity * Product.price).label('sales_product')
     ).join(Sale).group_by(
-        Product.product_name
+        Product.name
     ).all()
 
-    # to JSON format
-    salesproduct_data = [{'name': name, 'sales_product': sales_product}
-                         for name, sales_product in sales_per_product]
+    salesproduct_data = [{'name': name, 'sales_product': sales_product} for name, sales_product in sales_per_product]
 
     return {'sales_data': sales_data, 'salesproduct_data': salesproduct_data}
-
-
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-    
