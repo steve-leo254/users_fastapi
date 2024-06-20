@@ -36,8 +36,6 @@ class Product(Base):
 
     customer = relationship('Customer', back_populates='products')
 
-
-
 class Sale(Base):
     __tablename__ = 'sales'
     id = Column(Integer, primary_key=True)
@@ -45,19 +43,26 @@ class Sale(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     customer_id = Column(Integer, ForeignKey('customers.id'), nullable=False)
 
-
+    customer = relationship('Customer', back_populates='sales')
 
 class Customer(Base):
     __tablename__ = "customers"
     id = Column(Integer, primary_key=True)
-    user_name = Column(String, nullable=False,unique=True)
+    user_name = Column(String, nullable=False, unique=True)
     user_password = Column(String(255), nullable=False)
     phone_no = Column(String, nullable=False)
-    user_email = Column(String, nullable=False,unique=True)
+    user_email = Column(String, nullable=False, unique=True)
 
     # Relationships
     products = relationship('Product', back_populates='customer')
     sales = relationship('Sale', back_populates='customer')
+
+    def set_password(self, password):
+        self.user_password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.user_password, password)
+
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
