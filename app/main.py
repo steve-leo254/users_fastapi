@@ -23,11 +23,12 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://64.225.71.67",
-        "http://161.35.148.255:3000",
-        "http://127.0.0.1/:3000"
+        "*"
+        # "http://localhost:3000",
+        # "http://localhost:5173",
+        # "http://64.225.71.67",
+        # "http://161.35.148.255:3000",
+        # "http://127.0.0.1/:3000"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -222,6 +223,6 @@ def dashboard(db: Session = Depends(get_db)):
 
     return {'sales_data': sales_data, 'salesproduct_data': salesproduct_data}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)

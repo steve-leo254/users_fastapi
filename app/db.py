@@ -8,13 +8,13 @@ password = "AVNS_Ga3Ol-VnWRKmEjJNqsb"
 host = "db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com"
 port = "25060"
 database = "duka_three"
-sslmode = "require"
+# sslmode = "require"
 
 
 # Database URL
 
 #"postgresql://doadmin:AVNS_Ga3Ol-VnWRKmEjJNqsb@db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com:25060/duka_three?sslmode=require"
-SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:leo.steve@localhost:5432/sale_system_api'
+SQLALCHEMY_DATABASE_URL = "postgresql://doadmin:AVNS_Ga3Ol-VnWRKmEjJNqsb@db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com:25060/duka_three"
 
 
 
