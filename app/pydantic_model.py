@@ -11,6 +11,7 @@ class Tags(Enum):
     PURCHASE = "purchase"
 
 class TokenData(BaseModel):
+    user_id: Optional[int] = None
     username: Optional[str] = None
 
 class UserLogin(BaseModel):
@@ -34,7 +35,7 @@ class ProductResponse(BaseModel):
     stock_quantity: int
     cost: float
     image_url: str
-    user_id: int
+    user_id: str
 
     class Config:
         orm_mode = True

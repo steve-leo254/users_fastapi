@@ -5,12 +5,17 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Request, 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Date, cast, func
+from email_utiliity import send_email
+
+
+
 from sqlalchemy.orm import Session
 from auth import create_access_token, get_current_user, verify_password, pwd_context
 from db import SessionLocal, Product, Customer, Sale
 from pydantic_model import ProductRequest, ProductResponse, UserCreate, SaleRequest, SaleResponse, loginRequest, Tags
 
 import sentry_sdk
+
 
 sentry_sdk.init(
     dsn="https://9f21ea0acc3e9b24f0f3528d921b6e4d@o4507324307668992.ingest.us.sentry.io/4507384183193600",
@@ -51,6 +56,8 @@ def get_db():
     finally:
         db.close()
 
+
+
 @app.get("/sentry-debug")
 async def trigger_error():
     division_by_zero = 1 / 0
@@ -70,6 +77,14 @@ async def create_user(add_user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_customer)
     db.commit()
     db.refresh(new_customer)
+
+    # Send a welcome email
+    send_email(
+        to_email=new_customer.user_email,
+        subject="Welcome to Our Service",
+        body=f"Hi {new_customer.user_name},\n\nThank you for registering with us!"
+    )
+    
     return new_customer
 
 

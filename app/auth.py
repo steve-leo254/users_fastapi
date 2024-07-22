@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional,Annotated
+from typing import Optional, Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, HTTPAuthorizationCredentials, HTTPBearer
 import jwt
@@ -20,10 +20,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 # Utility functions
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    expire = datetime.now(timezone.utc) + expires_delta if expires_delta else datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -37,21 +34,21 @@ def get_password_hash(password):
 def verify_token(token: str, credentials_exception):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
+        user_id = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-        return TokenData(user_id=user_id)
+        return TokenData(user_id=int(user_id))
     except jwt.ExpiredSignatureError:
         raise credentials_exception
     except jwt.InvalidTokenError:
         raise credentials_exception
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid token payload")
 
-def get_user(user_id: str):
-    db = SessionLocal()
-    user = db.query(Customer).filter(Customer.id == user_id).first()
-    db.close()
+def get_user(user_id: int):
+    with SessionLocal() as db:
+        user = db.query(Customer).filter(Customer.id == user_id).first()
     return user
-    
 
 def get_token_auth_header(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     if credentials.scheme != "Bearer":
