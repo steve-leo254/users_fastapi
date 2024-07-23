@@ -3,11 +3,18 @@ from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
+# username = "doadmin"
+# password = "AVNS_Ga3Ol-VnWRKmEjJNqsb" 
+# host = "db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com"
+# port = "25060"
+# database = "duka_three"
+# # sslmode = "require"
+
 username = "doadmin"
 password = "AVNS_Ga3Ol-VnWRKmEjJNqsb" 
-host = "db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com"
+host = "users"
 port = "25060"
-database = "duka_three"
+database = "myduka_app"
 # sslmode = "require"
 
 
