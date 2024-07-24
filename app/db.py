@@ -10,18 +10,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # database = "duka_three"
 # # sslmode = "require"
 
-username = "doadmin"
-password = "AVNS_Ga3Ol-VnWRKmEjJNqsb" 
-host = "users"
-port = "25060"
-database = "myduka_app"
+# username = "doadmin"
+# password = "AVNS_Ga3Ol-VnWRKmEjJNqsb" 
+# host = "users"
+# port = "25060"
+# database = "myduka_app"
 # sslmode = "require"
 
 
 # Database URL
 
 #"postgresql://doadmin:AVNS_Ga3Ol-VnWRKmEjJNqsb@db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com:25060/duka_three?sslmode=require"
-SQLALCHEMY_DATABASE_URL = "postgresql://doadmin:AVNS_Ga3Ol-VnWRKmEjJNqsb@db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com:25060/duka_three"
+SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:leo.steve@172.17.0.1:5432/myduka_app'
 
 
 
@@ -41,7 +41,7 @@ class Product(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     stock_quantity = Column(Integer, default=0, nullable=False)
     image_url = Column(String)
-    user_id = Column(Integer, ForeignKey('customers.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('customers.id'), nullable=True)
 
     customer = relationship('Customer', back_populates='products')
 
@@ -57,7 +57,7 @@ class Sale(Base):
 class Customer(Base):
     __tablename__ = "customers"
     id = Column(Integer, primary_key=True)
-    user_name = Column(String, nullable=False, unique=True)
+    username = Column(String, nullable=False, unique=True)
     user_password = Column(String(255), nullable=False)
     phone_no = Column(String, nullable=False)
     user_email = Column(String, nullable=False, unique=True)

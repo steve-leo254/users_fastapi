@@ -15,7 +15,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 schemes
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Utility functions
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -45,10 +45,19 @@ def verify_token(token: str, credentials_exception):
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid token payload")
 
-def get_user(user_id: int):
+def get_user(username: int):
     with SessionLocal() as db:
-        user = db.query(Customer).filter(Customer.id == user_id).first()
+        user = db.query(Customer).filter(Customer.username == username).first()
     return user
+
+def authenticate_user(username: str, password: str):
+    user = get_user(username)
+    if not user:
+        return False
+    if not verify_password(password, user.password):
+        return False
+    return user
+
 
 def get_token_auth_header(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     if credentials.scheme != "Bearer":
@@ -57,6 +66,8 @@ def get_token_auth_header(credentials: HTTPAuthorizationCredentials = Depends(HT
         )
     return credentials.credentials
 
+
+
 async def get_current_user(token: str = Depends(get_token_auth_header)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,11 +75,10 @@ async def get_current_user(token: str = Depends(get_token_auth_header)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     token_data = verify_token(token, credentials_exception)
-    user = get_user(token_data.user_id)
+    user = get_user(token_data.username)
     if user is None:
         raise credentials_exception
     return user
-
 async def get_current_active_user(
     current_user: Annotated[Customer, Depends(get_current_user)],
 ):
