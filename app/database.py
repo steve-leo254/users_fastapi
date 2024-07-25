@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 
 password = 'leo.steve'
-URL_DATABASE = 'postgresql://postgres:leo.steve@localhost:5432/sale_system_api'
+URL_DATABASE = 'postgresql://postgres:leo.steve@172.17.0.1:5432/myduka_app'
 engine =create_engine(URL_DATABASE)
 
 

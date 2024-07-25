@@ -21,7 +21,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # Database URL
 
 #"postgresql://doadmin:AVNS_Ga3Ol-VnWRKmEjJNqsb@db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com:25060/duka_three?sslmode=require"
-SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:leo.steve@172.17.0.1:5432/myduka_app'
+SQLALCHEMY_DATABASE_URL  = 'postgresql://postgres:leo.steve@172.17.0.1:5432/myduka_app'
 
 
 
