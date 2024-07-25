@@ -69,7 +69,7 @@ async def trigger_error():
 async def create_user(add_user: UserCreate, db: Session = Depends(get_db)):
     hashed_password = pwd_context.hash(add_user.user_password)
     new_customer = Customer(
-        user_name=add_user.user_name,
+        username=add_user.username,
         user_email=add_user.user_email,
         user_password=hashed_password,
         phone_no=add_user.phone_no
@@ -82,7 +82,7 @@ async def create_user(add_user: UserCreate, db: Session = Depends(get_db)):
     send_email(
         to_email=new_customer.user_email,
         subject="Welcome to Our Service",
-        body=f"Hi {new_customer.user_name},\n\nThank you for registering with us!"
+        body=f"Hi {new_customer.username},\n\nThank you for registering with us!"
     )
     
     return new_customer
@@ -92,12 +92,12 @@ async def create_user(add_user: UserCreate, db: Session = Depends(get_db)):
 
 @app.post('/login', tags=[Tags.LOGIN.value])
 def login_user(login_request: loginRequest, db: Session = Depends(get_db)):
-    user = db.query(Customer).filter(Customer.user_name == login_request.user_name).first()
+    user = db.query(Customer).filter(Customer.username == login_request.username).first()
     if not user or not verify_password(login_request.user_password, user.user_password):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Credentials"
         )
-    access_token = create_access_token(data={"sub": user.user_name})
+    access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
 

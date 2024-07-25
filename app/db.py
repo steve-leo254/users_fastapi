@@ -3,27 +3,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# username = "doadmin"
-# password = "AVNS_Ga3Ol-VnWRKmEjJNqsb" 
-# host = "db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com"
-# port = "25060"
-# database = "duka_three"
-# # sslmode = "require"
-
-# username = "doadmin"
-# password = "AVNS_Ga3Ol-VnWRKmEjJNqsb" 
-# host = "users"
-# port = "25060"
-# database = "myduka_app"
-# sslmode = "require"
-
-
 # Database URL
-
-#"postgresql://doadmin:AVNS_Ga3Ol-VnWRKmEjJNqsb@db-postgresql-ams3-92394-do-user-16875423-0.c.db.ondigitalocean.com:25060/duka_three?sslmode=require"
-SQLALCHEMY_DATABASE_URL  = 'postgresql://postgres:leo.steve@172.17.0.1:5432/myduka_app'
-
-
+SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:leo.steve@localhost:5432/myduka_app'
 
 # Create engine and session
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
@@ -71,7 +52,6 @@ class Customer(Base):
 
     def check_password(self, password):
         return check_password_hash(self.user_password, password)
-
 
 # Create all tables
 Base.metadata.create_all(bind=engine)

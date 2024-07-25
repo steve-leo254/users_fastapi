@@ -19,7 +19,7 @@ class UserLogin(BaseModel):
     password: str
 
 class loginRequest(BaseModel):
-    user_name: str
+    username: str
     user_password: str
 
 class ProductRequest(BaseModel):
@@ -53,14 +53,14 @@ class SaleResponse(SaleRequest):
         orm_mode = True
 
 class UserCreate(BaseModel):
-    user_name: str
+    username: str
     user_password: str
     user_email: str
     phone_no: str
 
 class UserResponse(BaseModel):
     id: int
-    user_name: str
+    username: str
     user_email: str
     phone_no: str
 
