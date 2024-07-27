@@ -4,7 +4,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Database URL
-SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:leo.steve@localhost:5432/myduka_app'
+SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:leo.steve@172.17.0.1:5432/myduka_app'
 
 # Create engine and session
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
